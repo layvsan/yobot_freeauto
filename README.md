@@ -4,10 +4,7 @@
 
 yobot 提供了群聊、web 页面两套用户交互方式，具有操作便捷、通知及时、数据详细的特点。
 
+该版本魔改为新的自由出刀模式，暂不公开源码
+
 [源码](./src/client)
 
-[介绍](https://yobot.win)
-# yobot_freeauto
-# yobot_freeauto
-# yobot_freeauto
-# yobot_freeauto
