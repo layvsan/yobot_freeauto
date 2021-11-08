@@ -260,6 +260,11 @@ var vm = new Vue({
                 c_health: this.bossData.c_health,
                 d_health: this.bossData.d_health,
                 e_health: this.bossData.e_health,
+                a_issecond: this.bossData.a_issecond,
+                b_issecond: this.bossData.b_issecond,
+                c_issecond: this.bossData.c_issecond,
+                d_issecond: this.bossData.d_issecond,
+                e_issecond: this.bossData.e_issecond,
             });
             this.statusFormVisible = false;
         },

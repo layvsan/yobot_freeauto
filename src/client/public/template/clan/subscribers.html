@@ -37,7 +37,7 @@
                     <el-badge :value="subscribers[bn-1].length" :hidden="subscribers[bn-1].length == 0">[[ bosstag[bn-1] ]]</el-badge>
                 </span>
                 <p v-for="m in subscribers[bn-1]">
-                    [[ find_name(m.qqid) ]]（[[ m.qqid ]]）
+                    {[[ m.cycle ]]周目}   [[ find_name(m.qqid) ]]（[[ m.qqid ]]）
                     <template v-if="m.message">
                         ：[[ m.message ]]
                     </template>

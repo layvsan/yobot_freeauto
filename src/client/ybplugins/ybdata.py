@@ -4,7 +4,7 @@ from playhouse.migrate import SqliteMigrator, migrate
 from .web_util import rand_string
 
 _db = SqliteDatabase(None)
-_version = 18   # 目前版本
+_version = 21   # 目前版本
 
 MAX_TRY_TIMES = 3
 
@@ -111,7 +111,9 @@ class Clan_challenge(_BaseModel):
     boss_health_ramain = BigIntegerField()  # MMP拼错了，没法改了
     challenge_damage = BigIntegerField()
     is_continue = BooleanField()  # 此刀是结余刀
+    is_used = BooleanField(default=False)  # 此刀是结余刀
     is_second = BooleanField()  # 此刀是副圈刀
+    continue_num = IntegerField(default=0)# 尾刀编号
     message = TextField(null=True)
     behalf = IntegerField(null=True)
 
@@ -127,6 +129,20 @@ class Clan_subscribe(_BaseModel):
     sid = AutoField(primary_key=True)
     gid = BigIntegerField(index=True)
     qqid = IntegerField()
+    subscribe_item = SmallIntegerField()
+    message = TextField(null=True)
+    create_time = BigIntegerField(default=0)
+
+    class Meta:
+        indexes = (
+            (('gid', 'qqid', 'subscribe_item'), False),
+        )
+        
+class Clan_subscribe_new(_BaseModel):
+    sid = AutoField(primary_key=True)
+    gid = BigIntegerField(index=True)
+    qqid = IntegerField()
+    cycle = IntegerField()
     subscribe_item = SmallIntegerField()
     message = TextField(null=True)
     create_time = BigIntegerField(default=0)
@@ -193,7 +209,7 @@ def init(sqlite_filename):
         DB_schema.create(key='version', value=str(_version))
     else:
         old_version = int(DB_schema.get(key='version').value)
-
+    
     if not User.table_exists():
         Admin_key.create_table()
         User.create_table()
@@ -202,6 +218,7 @@ def init(sqlite_filename):
         Clan_member.create_table()
         Clan_challenge.create_table()
         Clan_subscribe.create_table()
+        Clan_subscribe_new.create_table()
         Clan_subscribe_layv.create_table()
         Character.create_table()
         User_box.create_table()
@@ -338,4 +355,15 @@ def db_upgrade(old_version):
             migrator.add_column('Clan_subscribe_layv', 'create_time',
                                 BigIntegerField(default=0)),
         )
+    if old_version < 20:
+        migrate(
+            migrator.add_column('clan_challenge', 'continue_num',
+                                IntegerField(default=0)),
+        )
+    if old_version < 21:
+        migrate(
+            migrator.add_column('clan_challenge', 'is_used',
+                                BooleanField(default=False)),
+        )
+        
     DB_schema.replace(key='version', value=str(_version)).execute()

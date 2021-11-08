@@ -78,6 +78,15 @@ var vm = new Vue({
             if (cha == undefined) {
                 return '';
             }
+            if(cha.behalf != null){
+                nickname = ' '
+                for (let index = 0; index < this.progressData.length; index++) {
+                    if (cha.behalf == this.progressData[index].qqid) {
+                        nickname = this.progressData[index].nickname;
+                    }
+                }
+                return `<a style="color:${cha.is_second?'red':''}">(${cha.is_second ? cha.cycle+1 : cha.cycle }-${cha.boss_num})</a><a class="digit${cha.damage.toString().length}">${cha.damage}<br>由${nickname}(${cha.behalf})上报</a>`;
+            }
             return `<a style="color:${cha.is_second?'red':''}">(${cha.is_second ? cha.cycle+1 : cha.cycle }-${cha.boss_num})</a><a class="digit${cha.damage.toString().length}">${cha.damage}</a>`;
             
         },
@@ -159,10 +168,10 @@ var vm = new Vue({
                     {
                         m.user_continue+=1
                     }
-                    m.detail[2 * m.user_continue - 1] = c;
+                    m.detail[2 * c.continue_num-1] = c;
                 } else {
                     m.can_continue += 1;
-                    m.detail[2 * m.can_continue-2] = c;
+                    m.detail[2 * c.continue_num-2] = c;
                     if (c.health_ramain != 0) {
                         m.finished += 1;
                     } else {
@@ -176,16 +185,36 @@ var vm = new Vue({
         viewTails: function () {
             this.tailsData = [];
             for (const m of this.progressData) {
-                if (m.finished % 1 != 0) {
-                    let c = m.detail[m.finished * 2 - 1];
-                    this.tailsData.push({
-                        qqid: m.qqid,
-                        nickname: m.nickname,
-                        boss: c.cycle + '-' + c.boss_num,
-                        damage: c.damage,
-                        message: c.message,
-                    });
+                // if (m.finished % 1 != 0) {
+                //     let c = m.detail[m.finished * 2 - 1];
+                //     this.tailsData.push({
+                //         qqid: m.qqid,
+                //         nickname: m.nickname,
+                //         boss: c.cycle + '-' + c.boss_num,
+                //         damage: c.damage,
+                //         message: c.message,
+                //     });
+                // }
+                
+                for (const c of m.detail){
+                    if (c==undefined){
+                        continue
+                    }
+                    
+                    if (c.is_continue==false && c.is_used==false && c.health_ramain==0){
+                        this.tailsData.push({
+                            qqid: m.qqid,
+                            nickname: m.nickname,
+                            boss: c.cycle + '-' + c.boss_num,
+                            damage: c.damage,
+                            message: c.message,
+                        });
+                    }
+                    
+                    
+                    
                 }
+                
             }
             this.tailsDataVisible = true;
         },

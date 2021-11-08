@@ -47,7 +47,8 @@
 				<el-menu-item index="1">面板</el-menu-item>
 			</el-menu>
 		</div>
-		<div class="clanname">[[groupData.group_name]]</div>
+		<div class="clanname" style="color:black">风控太多，过几天会迁移一部分用户到二号机</div>
+		<!--<div class="clanname">[[groupData.group_name]]</div>-->
 		<el-container style="margin-top: 0px;">
 			<el-main style="padding: 0 5%">
 				<el-row class="clanbg" style="background:none;height:auto">
@@ -318,21 +319,37 @@
 							<el-form>
 								<el-form-item label="周目数" label-width="120">
 									<el-input-number v-model="bossData.cycle" :min="1"></el-input-number>
+
 								</el-form-item>
 								<el-form-item label="1w剩余生命值" label-width="120">
 									<el-input-number v-model="bossData.a_health" :min="0"></el-input-number>
+									<el-radio-group v-model="bossData.a_issecond">
+										<el-switch v-model="bossData.a_issecond" active-text="副圈" inactive-text="无"></el-switch>
+									</el-radio-group>
 								</el-form-item>
 								<el-form-item label="2w剩余生命值" label-width="120">
 									<el-input-number v-model="bossData.b_health" :min="0"></el-input-number>
+									<el-radio-group v-model="bossData.b_issecond">
+										<el-switch v-model="bossData.b_issecond" active-text="副圈" inactive-text="无"></el-switch>
+									</el-radio-group>
 								</el-form-item>
 								<el-form-item label="3w剩余生命值" label-width="120">
 									<el-input-number v-model="bossData.c_health" :min="0"></el-input-number>
+									<el-radio-group v-model="bossData.c_issecond">
+										<el-switch v-model="bossData.c_issecond" active-text="副圈" inactive-text="无"></el-switch>
+									</el-radio-group>
 								</el-form-item>
 								<el-form-item label="4w剩余生命值" label-width="120">
 									<el-input-number v-model="bossData.d_health" :min="0"></el-input-number>
+									<el-radio-group v-model="bossData.d_issecond">
+										<el-switch v-model="bossData.d_issecond" active-text="副圈" inactive-text="无"></el-switch>
+									</el-radio-group>
 								</el-form-item>
 								<el-form-item label="5w剩余生命值" label-width="120">
 									<el-input-number v-model="bossData.e_health" :min="0"></el-input-number>
+									<el-radio-group v-model="bossData.e_issecond">
+										<el-switch v-model="bossData.e_issecond" active-text="副圈" inactive-text="无"></el-switch>
+									</el-radio-group>
 								</el-form-item>
 							</el-form>
 							<div slot="footer" class="dialog-footer">
