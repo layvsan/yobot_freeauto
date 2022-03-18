@@ -78,6 +78,7 @@ class ClanBattle:
         '查4': 34,
         '查5': 35,
         '留言':36,
+        '转秒':38,
         '查尾':97,
         '进刀':99,
         '进1':99,
@@ -145,10 +146,29 @@ class ClanBattle:
         server_total = len(self.setting['boss'][game_server])
         if cycle <= 30 or server_total <= 3:
             return 2  # 11~34 周目：三阶段
-        if cycle <= 40 or server_total <= 4:
+        if (game_server=='tw' and cycle <= 40) or (game_server=='jp' and cycle <= 38) or server_total <= 4:
             return 3  # 35~44 周目：四阶段
         return 4  # 45~ 周目：五阶段
-    
+
+    def checktime(self,number): # 檢查是不是合法的時間
+        return (number >= 0 and number <= 130) and \
+               ((number // 100 == 0 and number % 100 <= 59 and number % 100 >= 0) or \
+               (number // 100 == 1 and number % 100 <= 30 and number % 100 >= 0))
+
+    def transform_time(self,original_time): # 轉換秒數
+        result = ""
+        if original_time < 60:
+            if original_time < 10:
+                result += "00" + str(original_time)
+            else:
+                result += "0" + str(original_time)
+        else:
+            if 60 <= original_time < 70:
+                result += str(original_time // 60) + "0" + str(original_time % 60)
+            else:
+                result += str(original_time // 60) + str(original_time % 60)
+        return result
+
     def switch_boss(self,bossnum: int):
         if bossnum==1:
             return 'a_health'
@@ -454,7 +474,7 @@ class ClanBattle:
         lens2 = len(self.get_subscribe_list(group_id,boss_num))
         res = ''
         if lens > 0:
-            res +=  f'进🔪人数：{lens}\n'
+            res +=  f'进刀人数：{lens}\n'
         if lens2 > 0:
             res +=  f'挂树人数：{lens2}\n'
         return res
@@ -518,7 +538,7 @@ class ClanBattle:
         if damage < 0 or boss_health==0:
             raise InputError(str(bossnum)+'王已经盒了')
         if (not defeat) and (damage >= boss_health):
-            raise InputError('伤害超出剩余血量，如击败请使用尾🔪')
+            raise InputError('伤害超出剩余血量，如击败请使用尾刀')
         behalf = None
         if behalfed is not None:
             behalf = qqid
@@ -541,7 +561,7 @@ class ClanBattle:
                 Clan_challenge.challenge_pcrdate == d,
             ).count()
             if today_count != 0:
-                raise GroupError('今日报🔪记录不为空，无法将记录添加到昨日')
+                raise GroupError('今日报刀记录不为空，无法将记录添加到昨日')
             d -= 1
             t += 86400
         challenges = Clan_challenge.select().where(
@@ -561,7 +581,7 @@ class ClanBattle:
         # 可出的补偿
         can_continue = sum(bool(c.boss_health_ramain==0 and c.is_continue==False)
                            for c in challenges)
-        # 非补偿🔪次数
+        # 非补偿刀次数
         not_continue = sum(bool(c.is_continue==False)
                            for c in challenges)
         # 已出的补偿
@@ -571,10 +591,10 @@ class ClanBattle:
         if not_continue>=3:
             is_continue = True
         
-        #如果是补偿🔪
+        #如果是补偿刀
         if is_continue:
             if can_continue <= user_continue:
-                raise InputError('有补🔪🐎¿')
+                raise InputError('有补刀🐎¿')
                 
         is_member.last_message = extra_msg
         is_member.save()
@@ -657,7 +677,7 @@ class ClanBattle:
             continue_num = con_num,
             is_continue=is_continue,
             is_used = False,
-            is_second = is_second,#这🔪是否🔪副圈
+            is_second = is_second,#这刀是否刀副圈
             message=extra_msg,
             behalf=behalf,
         )
@@ -675,14 +695,14 @@ class ClanBattle:
         nik = user.nickname or user.qqid
         #layv 准备清理状态
         if defeat:
-            msg = '{}造成了{:,}点伤害，击败了boss\n（今日第{}🔪，{}）'.format(
-                nik, damage, finished+can_continue-user_continue+1, '补偿🔪' if is_continue else '尾'
+            msg = '{}对{}王造成了{:,}点伤害，击败了boss\n（今日第{}刀，{}）'.format(
+                nik,bossnum, damage, finished+can_continue+1, '补偿刀' if is_continue else '尾'
             )
             group.challenging_member_qq_id = None
             group.save()
         else:
-            msg = '{}造成了{:,}点伤害\n（今日第{}🔪，{}）'.format(
-                nik, damage, finished+can_continue-user_continue+1, '补偿🔪' if is_continue else '完整'
+            msg = '{}对{}王造成了{:,}点伤害\n（今日第{}刀，{}）'.format(
+                nik,bossnum, damage, finished+can_continue+1, '补偿刀' if is_continue else '完整'
             )
         if is_continue:
             msg += '使用的补偿'
@@ -837,7 +857,7 @@ class ClanBattle:
         )[0]
         last_challenge = self._get_group_previous_challenge(group)
         if last_challenge is None:
-            raise GroupError('本群无出🔪记录')
+            raise GroupError('本群无出刀记录')
         if (last_challenge.qqid != qqid) and (user.authority_group >= 100):
             raise UserError('无权撤销')
         
@@ -940,7 +960,7 @@ class ClanBattle:
             group.d_issecond,
             group.e_issecond,
             0,
-            f'{nik}的出🔪记录已被撤销',
+            f'{nik}的出刀记录已被撤销',
         )
         self._boss_status[group_id].set_result(
             (self._boss_data_dict(group), status.info)
@@ -1226,9 +1246,9 @@ class ClanBattle:
     async def layv_send(self, qqid: int, message: str):
         await asyncio.sleep(random.randint(3, 10))
         try:
-            _logger.info(f'向{qqid}发送出🔪提醒{message}')
+            _logger.info(f'向{qqid}发送出刀提醒{message}')
             await self.send_private_msg(user_id=qqid,group_id=group_id, message=message)
-            _logger.info(f'向{qqid}发送出🔪提醒')
+            _logger.info(f'向{qqid}发送出刀提醒')
         except Exception as e:
             _logger.exception(e)
     
@@ -1237,7 +1257,7 @@ class ClanBattle:
             await asyncio.sleep(random.randint(3, 10))
             try:
                 await self.api.send_private_msg(user_id=qqid,group_id=group_id, message=content)
-                _logger.info(f'向{qqid}发送出🔪提醒')
+                _logger.info(f'向{qqid}发送出刀提醒')
             except Exception as e:
                 _logger.exception(e)
 
@@ -1260,7 +1280,7 @@ class ClanBattle:
             asyncio.ensure_future(self.send_private_remind(
                 member_list=member_list,
                 group_id=group_id,
-                content=f'{sender_name}提醒您及时完成今日出🔪',
+                content=f'{sender_name}提醒您及时完成今日出刀',
             ))
         else:
             message = ' '.join((
@@ -1268,7 +1288,7 @@ class ClanBattle:
             ))
             asyncio.ensure_future(self.api.send_group_msg(
                 group_id=group_id,
-                message=message+f'\n=======\n{sender_name}提醒您及时完成今日出🔪',
+                message=message+f'\n=======\n{sender_name}提醒您及时完成今日出刀',
             ))
 
     def add_subscribe(self, group_id: Groupid, qqid: QQid, boss_num, message=None):
@@ -1366,7 +1386,7 @@ class ClanBattle:
         )
         if subscribe is not None:
             if message is None:
-                raise UserError('请输入【进🔪 伤害】更新当前伤害值，如需代人进🔪使用【进🔪xxx 伤害】')
+                raise UserError('请输入【进刀 伤害】更新当前伤害值，如需代人进刀使用【进刀xxx 伤害】')
             else:
                 Clan_subscribe_layv.delete().where(
                     Clan_subscribe_layv.gid == group_id,
@@ -1415,17 +1435,17 @@ class ClanBattle:
         ):
             if challenge.boss_health_ramain != 0:
                 if challenge.is_continue:
-                    # 剩余🔪
+                    # 剩余刀
                     continued_challenge_count += 1
                 else:
-                    # 完整🔪
+                    # 完整刀
                     full_challenge_count += 1
             else:
                 if challenge.is_continue:
-                    # 尾余🔪
+                    # 尾余刀
                     continued_tailing_challenge_count += 1
                 else:
-                    # 尾🔪
+                    # 尾刀
                     tailing_challenge_count += 1
         return (
             full_challenge_count,
@@ -1540,7 +1560,7 @@ class ClanBattle:
                 strs = '💩'
             elif m>0:
                 second = second%60
-                strs = '(已进🔪'+str(m)+'分'+str(second)+'秒)'
+                strs = '(已进刀'+str(m)+'分'+str(second)+'秒)'
         return strs
 
     def cancel_subscribe(self, group_id: Groupid, qqid: QQid) -> int:
@@ -1878,7 +1898,7 @@ class ClanBattle:
         self.get_member_list(group_id, nocache=True)
 
         return todaystatus
-    #layv 获取当前尾🔪成员
+    #layv 获取当前尾刀成员
     def layv_weidao(self,group_id: Groupid):
         group = Clan_group.get_or_none(group_id=group_id)
         report = self.get_report(group_id,None,None,pcr_datetime(group.game_server, int(time.time()))[0])
@@ -2133,16 +2153,16 @@ class ClanBattle:
             unfinished = (tailing_challenge_count
                           - continued_challenge_count
                           - continued_tailing_challenge_count)
-            progress = '----------------------------\n今天已出:          {}🔪\n完整🔪:            {}🔪\n补偿🔪:            {}🔪'.format(
-                finished+unfinished*0.5, 90 - finished - unfinished, unfinished
+            progress = '----------------------------\n今天已出:          {}刀\n完整刀:            {}刀\n补偿刀:            {}刀'.format(
+                finished+unfinished*0.5, max(0, 90 - finished - unfinished ), unfinished
             )
-            return f'{url}{boss_summary}{progress}\n因为举报太多，私聊链接已关闭，请牢记自己面板密码\n人多的群请清理下自己群内闲杂人'
-        elif match_num == 4:  # 报🔪
+            return f'{url}{boss_summary}{progress}\n私聊登录已关闭，群里发登录即可'
+        elif match_num == 4:  # 报刀
             match = re.match(r'^刀([1-5]) ?(\d+)([Ww万Kk千])? *(?:\[CQ:at,qq=(\d+)\])? *(昨[日天])? *(?:[\:：](.*))? *([补b])? *([1-3])?$', cmd)
             if not match:
                 match = re.match(r'^报刀([1-5]) ?(\d+)([Ww万Kk千])? *(?:\[CQ:at,qq=(\d+)\])? *(昨[日天])? *(?:[\:：](.*))? *([补b])? *([1-3])?$', cmd)
             if not match:
-                return
+                return '请确定出刀的boss，比如【报刀x 1000w b】；【x】为boss编号，【b】代表该刀为补偿刀\n————————————————————\n【b】后的刀编号仅在管理要求必须完整报刀以查询成员未出的尾刀时使用，AUTO会可以直接忽略编号\n————————————————————\n如果今天3刀完整刀已出完，只剩补偿刀，不带【b】也可以'
             unit = {
                 'W': 10000,
                 'w': 10000,
@@ -2185,12 +2205,12 @@ class ClanBattle:
             
             _logger.info('群聊 成功 {} {} {}'.format(user_id, group_id, cmd))
             return str(boss_status)
-        elif match_num == 5:  # 尾🔪
+        elif match_num == 5:  # 尾刀
             match = re.match(r'^尾([1-5]) ?(?:\[CQ:at,qq=(\d+)\])? *(昨[日天])? *(?:[\:：](.*))? *([补b])? *([1-3])?$', cmd)
             if not match:
                 match = re.match(r'^尾刀([1-5]) ?(?:\[CQ:at,qq=(\d+)\])? *(昨[日天])? *(?:[\:：](.*))? *([补b])? *([1-3])?$', cmd)
             if not match:
-                return
+                return '请确定出刀的boss，比如【尾刀x 1000w b】；【x】为boss编号，【b】代表该刀为补偿刀\n————————————————————\n【b】后的刀编号仅在管理要求必须完整报刀以查询成员未出的尾刀时使用，AUTO会可以直接忽略编号\n————————————————————\n如果今天3刀完整刀已出完，只剩补偿刀，不带【b】也可以'
             bossnum = int(match.group(1))
             behalf = match.group(2) and int(match.group(2))
             previous_day = bool(match.group(3))
@@ -2283,7 +2303,7 @@ class ClanBattle:
             # 可出的补偿
             can_continue = sum(bool(c.boss_health_ramain==0 and c.is_continue==False)
                                for c in challenges)
-            # 非补偿🔪次数
+            # 非补偿刀次数
             not_continue = sum(bool(c.is_continue==False)
                                for c in challenges)
             # 已出的补偿
@@ -2293,13 +2313,15 @@ class ClanBattle:
             for c in challenges:
                 if c.boss_health_ramain==0 and c.is_continue==False and c.is_used==False:
                     if msg is None:
-                        msg = '\n------------未出尾🔪------------\n编号     王     伤害     留言/补时'
+                        msg = '\n------------未出尾刀------------\n编号     王     伤害     留言/补时'
                     msg += '\n'+str(c.continue_num)
                     msg += '        '+str(c.boss_cycle)+'-' + str(c.boss_num) + '    ' + str(c.challenge_damage) + '    ' + str(c.message) 
             cotinue = max(0,can_continue-user_continue)
             if msg is not None:
                 msg+='\n------------------------------\n如需对应编号报刀方便管理查尾，可使用【尾2b2】对应2号刀补偿'
-            return re2+str(not_continue)+'🔪，还有'+str(cotinue)+'尾🔪未出'+msg
+            else:
+                msg = ''
+            return re2+str(not_continue)+'刀，还有'+str(cotinue)+'尾刀未出'+msg
         elif match_num == 10:  # 预约
             match = re.match(r'^预约([1-5]) *(?:[\:：](.*))?$', cmd)
             if not match:
@@ -2381,7 +2403,7 @@ class ClanBattle:
             _logger.info('群聊 成功 {} {} {}'.format(user_id, group_id, cmd))
             return '已挂树'
         elif match_num == 12:  # 申请/锁定
-            if cmd == '申请出🔪':
+            if cmd == '申请出刀':
                 appli_type = 1
                 extra_msg = None
             elif cmd == '锁定':
@@ -2446,7 +2468,7 @@ class ClanBattle:
                     group_id
                 )
             )
-            return f'公会战面板：\n{url}\n建议添加到浏览器收藏夹或桌面快捷方式\n老马风控严重,部分群得更换二号机,管理员可以加群729199824联系辣鱼'
+            return f'公会战面板：\n{url}\n建议添加到浏览器收藏夹或桌面快捷方式'
         elif match_num == 16:  # SL
             match = re.match(r'^(?:SL|sl) *([\?？])? *(?:\[CQ:at,qq=(\d+)\])? *([\?？])? *$', cmd)
             if not match:
@@ -2491,11 +2513,11 @@ class ClanBattle:
                     reply += '：' + m['message']
                 reply += '(已挂树'+str(m['time'])+')'
             return reply
-        elif match_num == 97: #查询进🔪
+        elif match_num == 97: #查询进刀
             match = re.match(r'^查尾 *(?:[\:：](.*))?$', cmd)
             if not match:
                 return
-            beh = '尾🔪' 
+            beh = '尾刀' 
             weidao = self.layv_weidao(group_id)
             if not weidao:
                 return '当前没有人有未出完的'+beh
@@ -2509,10 +2531,10 @@ class ClanBattle:
             reply += '\n用户名     王     伤害     留言/补时'
             reply += msg
             return reply
-        elif 30 <= match_num <= 35: #查询进🔪
+        elif 30 <= match_num <= 35: #查询进刀
             if len(cmd) != 2:
                 return
-            beh = '进🔪'
+            beh = '进刀'
             boss_num = match_num-30
             if boss_num==0:
                 subscribers = self.get_subscribe_list_layv(group_id)
@@ -2563,9 +2585,68 @@ class ClanBattle:
                 return str(e)
             _logger.info('群聊 成功 {} {} {}'.format(user_id, group_id, cmd))
             return str(status)
-        elif match_num == 99:  # 进🔪
+        elif match_num == 38:
+            message1 = cmd.lower() # 轉為小寫
+            message2 = "" 
+            for c in message1:
+                if c in ("，", "、", "。"):
+                    message2 += c
+                elif 65281 <= ord(c) <= 65374:
+                    message2 += chr(ord(c) - 65248)
+                elif ord(c) == 12288: # 空格字元
+                    message2 += chr(32)
+                else:
+                    message2 += c
+            # message2 將 message1 轉為半形
+            if re.match(r"\s*\转秒\s*[\s\S]+", message2):
+                tr = re.match(r"\s*\转秒\s*(\d+)\s*\n([\s\S]+)", message2)
+                if tr:
+                    time = int(tr.group(1))
+                    if 1 <= time <= 90:
+                        lines = tr.group(2).split("\n")
+                        resultline = ""
+                        for line in lines:
+                            filter = line.replace(":", "").replace(".","").replace("\t", "") # 過濾特殊字元
+                            match = re.match(r'(\D*)(\d{1,4})((\s*[~-]\s*)(\d{1,4}))?(.*)?', filter) # 擷取時間
+                            if match:
+                                content1 = match.group(1) # 時間前面的文字
+                                timerange = match.group(3) # 056~057 這種有範圍的時間
+                                time1 = int(match.group(2)) # 有範圍的時間 其中的第一個時間
+                                time2 = 0
+                                if timerange is not None and match.group(5) is not None:
+                                    time2 = int(match.group(5)) # 有範圍的時間 其中的第二個時間
+                                rangecontent = match.group(4) # 第一個時間和第二個時間中間的字串
+                                content2 = match.group(6) # 時間後面的文字
+                                if time1 >=60 and time1<=90 :
+                                    time1 = 100 + time1 -60
+                                if time2 >=60 and time2<=90 :
+                                    time2 = 100 + time2 -60
+                                if self.checktime(time1) and ((timerange is None and match.group(5) is None) or (timerange is not None and match.group(5) is not None and self.checktime(time2))):
+                                    totaltime1 = time1 % 100 + (time1 // 100) * 60 # time1的秒數
+                                    newtime1 = totaltime1 - (90 - time)
+                                    result = ""
+                                    if newtime1 < 0: # 如果時間到了 後續的就不要轉換
+                                        continue # 迴圈跳到下一個
+                                    if match.group(5) is None:
+                                        result = content1 + self.transform_time(newtime1) + content2
+                                    else:
+                                        totaltime2 = time2 % 100 + time2 // 100 * 60 # time2的秒數
+                                        newtime2 = totaltime2 - (90 - time)
+                                        result = content1 + self.transform_time(newtime1) + rangecontent + self.transform_time(newtime2) + content2
+                                    resultline += result
+                                else:
+                                    resultline += line
+                            else:
+                                resultline += line
+                            resultline += "\n"
+                        return resultline
+                    else:
+                        return "您輸入的補償秒數錯誤，秒數必須要在 1～90 之間！"
+                else:
+                    return "您輸入的秒數格式錯誤！正確的格式為\n转秒 補償秒數\n文字軸\n\n(補償秒數後面請直接換行，不要有其他字元)"
+        elif match_num == 99:  # 进刀
             match = re.match(r'^进刀([1-5]) *(?:\[CQ:at,qq=(\d+)\])? *(?:[\:： ](.*))?$', cmd)
-            add_msg = ' 进🔪可以改为 [进3] 了'
+            add_msg = ' '
             if not match:
                 match = re.match(r'^进([1-5]) *(?:\[CQ:at,qq=(\d+)\])? *(?:[\:： ](.*))?$', cmd)
                 add_msg = ''
@@ -2593,7 +2674,7 @@ class ClanBattle:
             
             old_user = None
             if behalf:
-                old_user = '('+self._get_nickname_by_qqid(user_id)+'代🔪)'
+                old_user = '('+self._get_nickname_by_qqid(user_id)+'代刀)'
                 user_id = behalf
             extra_msg = match.group(3)
             if isinstance(extra_msg, str):
@@ -2613,7 +2694,7 @@ class ClanBattle:
                 _logger.info('群聊 失败 {} {} {}'.format(user_id, group_id, cmd))
                 return str(e)
             _logger.info('群聊 成功 {} {} {}'.format(user_id, group_id, cmd))
-            return '已进🔪'+add_msg
+            return '已进刀'+add_msg
 
     def register_routes(self, app: Quart):
 

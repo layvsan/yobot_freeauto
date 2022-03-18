@@ -26,11 +26,11 @@ class BossStatus:
     def __str__(self):
         summary = (
             '现在{}周目\n'
-            '1w生命值       {:,}{}\n'
-            '2w生命值       {:,}{}\n'
-            '3w生命值       {:,}{}\n'
-            '4w生命值       {:,}{}\n'
-            '5w生命值       {:,}{}\n'
+            '1王生命值       {:,}{}\n'
+            '2王生命值       {:,}{}\n'
+            '3王生命值       {:,}{}\n'
+            '4王生命值       {:,}{}\n'
+            '5王生命值       {:,}{}\n'
         ).format(self.cycle, 
                  self.ahealth,
                  '(副圈)' if self.a_issecond else '', 
