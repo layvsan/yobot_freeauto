@@ -146,7 +146,7 @@ class ClanBattle:
         server_total = len(self.setting['boss'][game_server])
         if cycle <= 30 or server_total <= 3:
             return 2  # 11~34 周目：三阶段
-        if (game_server=='tw' and cycle <= 40) or (game_server=='jp' and cycle <= 38) or server_total <= 4:
+        if  ( (game_server=='jp' or game_server=='tw') and cycle <= 38) or server_total <= 4:
             return 3  # 35~44 周目：四阶段
         return 4  # 45~ 周目：五阶段
 
@@ -877,35 +877,35 @@ class ClanBattle:
                     group.a_issecond = True
                 else:
                     group.a_issecond = True
-                    group.a_health = bosshealth[0]
+                    # group.a_health = bosshealth[0]
                     
                 if group.b_issecond:
                     group.b_health = 0
                     group.b_issecond = True
                 else:
                     group.b_issecond = True
-                    group.b_health = bosshealth[1]
+                    # group.b_health = bosshealth[1]
                     
                 if group.c_issecond:
                     group.c_health = 0
                     group.c_issecond = True
                 else:
                     group.c_issecond = True
-                    group.c_health = bosshealth[2]
+                    # group.c_health = bosshealth[2]
                     
                 if group.d_issecond:
                     group.d_health = 0
                     group.d_issecond = True
                 else:
                     group.d_issecond = True
-                    group.d_health = bosshealth[3]
+                    # group.d_health = bosshealth[3]
                     
                 if group.e_issecond:
                     group.e_health = 0
                     group.e_issecond = True
                 else:
                     group.e_issecond = True
-                    group.e_health = bosshealth[4]
+                    # group.e_health = bosshealth[4]
                 
             
         group.boss_cycle = last_challenge.boss_cycle
